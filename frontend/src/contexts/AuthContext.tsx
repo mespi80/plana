@@ -32,20 +32,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const validateToken = async (currentToken: string) => {
     try {
-      console.log('Validating token...');
+      console.log('Validating token:', currentToken.substring(0, 10) + '...');
       const response = await fetch(`${API_ENDPOINTS.VALIDATE_TOKEN}`, {
         headers: {
           Authorization: `Bearer ${currentToken}`,
+          'Content-Type': 'application/json',
         },
       });
 
-      if (response.ok) {
-        const data = await response.json();
+      const data = await response.json();
+
+      if (response.ok && data.user) {
         console.log('Token validation successful:', data);
         setUser(data.user);
         return true;
       } else {
-        console.error('Token validation failed');
+        console.error('Token validation failed:', data.error);
         return false;
       }
     } catch (error) {
@@ -56,30 +58,55 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const initializeAuth = async () => {
-      if (token) {
-        const isValid = await validateToken(token);
-        if (!isValid) {
-          logout();
+      try {
+        console.log('Initializing authentication...');
+        if (token) {
+          console.log('Found token in localStorage, validating...');
+          const isValid = await validateToken(token);
+          if (!isValid) {
+            console.log('Token validation failed during initialization');
+            logout();
+          } else {
+            console.log('Token validation successful during initialization');
+          }
+        } else {
+          console.log('No token found in localStorage');
         }
+      } catch (error) {
+        console.error('Error during auth initialization:', error);
+        logout();
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
     };
 
     initializeAuth();
   }, []);
 
   const login = async (newToken: string) => {
-    console.log('Logging in with token...');
-    localStorage.setItem('token', newToken);
-    setToken(newToken);
-    
-    const isValid = await validateToken(newToken);
-    if (isValid) {
-      console.log('Login successful, navigating to map...');
-      navigate('/map');
-    } else {
-      console.error('Login failed: token validation failed');
+    try {
+      console.log('Starting login process...');
+      if (!newToken) {
+        throw new Error('No token provided');
+      }
+
+      localStorage.setItem('token', newToken);
+      setToken(newToken);
+      
+      console.log('Validating new token...');
+      const isValid = await validateToken(newToken);
+      
+      if (isValid) {
+        console.log('Login successful, navigating to map...');
+        navigate('/map');
+      } else {
+        console.error('Login failed: token validation failed');
+        throw new Error('Token validation failed');
+      }
+    } catch (error) {
+      console.error('Login error:', error);
       logout();
+      throw error; // Re-throw the error to be handled by the login component
     }
   };
 
@@ -92,8 +119,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const updateUser = (updatedUser: User) => {
+    console.log('Updating user:', updatedUser);
     setUser(updatedUser);
   };
+
+  const isAuthenticated = !!user && !!token;
 
   return (
     <AuthContext.Provider
@@ -103,11 +133,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         login,
         logout,
         updateUser,
-        isAuthenticated: !!user,
-        isLoading
+        isAuthenticated,
+        isLoading,
       }}
     >
-      {!isLoading && children}
+      {children}
     </AuthContext.Provider>
   );
 }
