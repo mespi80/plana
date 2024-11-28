@@ -13,28 +13,37 @@ export const Login: React.FC = () => {
     try {
       setIsAuthenticating(true);
       console.log('Google login response:', credentialResponse);
+
       const response = await fetch(`${API_ENDPOINTS.GOOGLE_AUTH}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Origin': window.location.origin
         },
+        credentials: 'include',
         body: JSON.stringify({
           credential: credentialResponse.credential,
         }),
       });
 
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Network error' }));
+        console.error('Backend error:', errorData);
+        throw new Error(errorData.error || 'Authentication failed');
+      }
+
       const data = await response.json();
       console.log('Backend response:', data);
 
-      if (response.ok && data.token) {
+      if (data.token) {
         await login(data.token);
       } else {
-        console.error('Google authentication failed:', data);
-        setError(data.error || 'Authentication failed');
+        throw new Error('No token received from server');
       }
     } catch (error) {
       console.error('Error during Google authentication:', error);
-      setError('An error occurred during authentication');
+      setError(error instanceof Error ? error.message : 'An error occurred during authentication');
     } finally {
       setIsAuthenticating(false);
     }
