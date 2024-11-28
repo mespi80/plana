@@ -1,16 +1,18 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { GoogleLogin } from '@react-oauth/google';
 import { useAuth } from '../contexts/AuthContext';
-import { Box, Container, Typography } from '@mui/material';
+import { Box, Typography, Alert, Snackbar, CircularProgress } from '@mui/material';
 import { API_ENDPOINTS } from '../config/api';
-import { useNavigate } from 'react-router-dom';
 
 export const Login: React.FC = () => {
-  const { login } = useAuth();
-  const navigate = useNavigate();
+  const { login, isLoading } = useAuth();
+  const [error, setError] = useState<string>('');
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
 
   const handleGoogleSuccess = async (credentialResponse: any) => {
     try {
+      setIsAuthenticating(true);
+      console.log('Google login response:', credentialResponse);
       const response = await fetch(`${API_ENDPOINTS.GOOGLE_AUTH}`, {
         method: 'POST',
         headers: {
@@ -21,17 +23,38 @@ export const Login: React.FC = () => {
         }),
       });
 
-      if (response.ok) {
-        const data = await response.json();
+      const data = await response.json();
+      console.log('Backend response:', data);
+
+      if (response.ok && data.token) {
         await login(data.token);
-        navigate('/map');
       } else {
-        console.error('Google authentication failed');
+        console.error('Google authentication failed:', data);
+        setError(data.error || 'Authentication failed');
       }
     } catch (error) {
       console.error('Error during Google authentication:', error);
+      setError('An error occurred during authentication');
+    } finally {
+      setIsAuthenticating(false);
     }
   };
+
+  if (isLoading || isAuthenticating) {
+    return (
+      <Box
+        sx={{
+          height: '100vh',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          background: 'linear-gradient(45deg, #FE6B8B 30%, #FF8E53 90%)',
+        }}
+      >
+        <CircularProgress sx={{ color: 'white' }} />
+      </Box>
+    );
+  }
 
   return (
     <Box
@@ -75,15 +98,30 @@ export const Login: React.FC = () => {
         >
           Discover Events Around You
         </Typography>
-        <GoogleLogin
-          onSuccess={handleGoogleSuccess}
-          onError={() => console.log('Login Failed')}
-          useOneTap
-          theme="filled_blue"
-          size="large"
-          shape="pill"
-        />
+        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+          <GoogleLogin
+            onSuccess={handleGoogleSuccess}
+            onError={() => {
+              console.error('Login Failed');
+              setError('Google login failed');
+            }}
+            useOneTap
+            theme="filled_blue"
+            size="large"
+            shape="pill"
+          />
+        </Box>
       </Box>
+      <Snackbar 
+        open={!!error} 
+        autoHideDuration={6000} 
+        onClose={() => setError('')}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert onClose={() => setError('')} severity="error" sx={{ width: '100%' }}>
+          {error}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };
