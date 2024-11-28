@@ -18,12 +18,14 @@ const port = parseInt(process.env.PORT || '10000', 10);
 app.use(cors({
   origin: [
     'https://plana.vercel.app',
+    'https://plana-two.vercel.app',
     'http://localhost:3000',
     'http://localhost:5173'
   ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+  exposedHeaders: ['Content-Length', 'Content-Type']
 }));
 app.use(express.json());
 app.use(morgan('dev'));
