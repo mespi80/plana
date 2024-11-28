@@ -6,17 +6,18 @@ import { AuthError } from '../types/errors';
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
-export const googleAuth = async (req: Request, res: Response) => {
+export const googleAuth = async (req: Request, res: Response): Promise<void> => {
   try {
     console.log('Starting Google authentication...');
     const { credential } = req.body;
     
     if (!credential) {
       console.error('No credential provided');
-      return res.status(400).json({ 
+      res.status(400).json({ 
         error: 'Authentication failed',
         details: 'No credential provided'
       });
+      return;
     }
 
     console.log('Verifying Google token...');
@@ -29,7 +30,11 @@ export const googleAuth = async (req: Request, res: Response) => {
     const payload = ticket.getPayload();
     if (!payload) {
       console.error('Invalid token payload');
-      throw new AuthError('Invalid token payload');
+      res.status(401).json({
+        error: 'Authentication failed',
+        details: 'Invalid token payload'
+      });
+      return;
     }
 
     console.log('Token verified, processing user data...');
@@ -37,7 +42,11 @@ export const googleAuth = async (req: Request, res: Response) => {
 
     if (!email) {
       console.error('No email in payload');
-      throw new AuthError('No email provided in token payload');
+      res.status(401).json({
+        error: 'Authentication failed',
+        details: 'No email provided in token payload'
+      });
+      return;
     }
 
     // Find or create user
@@ -93,14 +102,18 @@ export const googleAuth = async (req: Request, res: Response) => {
   }
 };
 
-export const validateToken = async (req: Request, res: Response) => {
+export const validateToken = async (req: Request, res: Response): Promise<void> => {
   try {
     console.log('Validating token...');
     const token = req.headers.authorization?.split(' ')[1];
     
     if (!token) {
       console.error('No token provided');
-      throw new AuthError('No token provided');
+      res.status(401).json({
+        error: 'Invalid token',
+        details: 'No token provided'
+      });
+      return;
     }
 
     console.log('Verifying JWT token...');
@@ -111,7 +124,11 @@ export const validateToken = async (req: Request, res: Response) => {
 
     if (!user) {
       console.error('User not found');
-      throw new AuthError('User not found');
+      res.status(401).json({
+        error: 'Invalid token',
+        details: 'User not found'
+      });
+      return;
     }
 
     console.log('Token validation successful');
