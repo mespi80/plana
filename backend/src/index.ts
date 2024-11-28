@@ -12,11 +12,15 @@ import { errorHandler } from './middleware/error.middleware';
 dotenv.config();
 
 const app = express();
+const port = process.env.PORT || 10000;
 
 // Middleware
-app.use(cors());
-app.use(morgan('dev'));
+app.use(cors({
+  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  credentials: true,
+}));
 app.use(express.json());
+app.use(morgan('dev'));
 app.use(express.urlencoded({ extended: true }));
 
 // Routes
@@ -26,7 +30,12 @@ app.use('/api/users', userRoutes);
 
 // Health check endpoint
 app.get('/api/health', (_req: Request, res: Response) => {
-  res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+  res.status(200).json({ 
+    status: 'ok', 
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV,
+    port: port
+  });
 });
 
 // Error handling
@@ -37,9 +46,8 @@ mongoose
   .connect(process.env.MONGODB_URI!)
   .then(() => {
     console.log('Connected to MongoDB');
-    const PORT = 5001; 
-    app.listen(PORT, () => {
-      console.log(`Server is running on port ${PORT}`);
+    app.listen(port, '0.0.0.0', () => {
+      console.log(`Server is running on port ${port}`);
     });
   })
   .catch((error) => {
