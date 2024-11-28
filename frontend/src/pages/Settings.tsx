@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 import {
   Box,
   Container,
@@ -11,8 +12,11 @@ import {
   Button,
   Typography,
   Stack,
+  Divider,
 } from '@mui/material';
 import { API_ENDPOINTS } from '../config/api';
+import Brightness4Icon from '@mui/icons-material/Brightness4';
+import Brightness7Icon from '@mui/icons-material/Brightness7';
 
 interface SettingsForm {
   firstName: string;
@@ -23,6 +27,7 @@ interface SettingsForm {
 export const Settings: React.FC = () => {
   const navigate = useNavigate();
   const { user, token, updateUser } = useAuth();
+  const { isDarkMode, toggleDarkMode } = useTheme();
   const [form, setForm] = useState<SettingsForm>({
     firstName: '',
     lastName: '',
@@ -42,10 +47,14 @@ export const Settings: React.FC = () => {
   const handleChange = (field: keyof SettingsForm) => (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
+    const newValue = field === 'darkMode' ? event.target.checked : event.target.value;
     setForm({
       ...form,
-      [field]: field === 'darkMode' ? event.target.checked : event.target.value,
+      [field]: newValue,
     });
+    if (field === 'darkMode') {
+      toggleDarkMode();
+    }
   };
 
   const handleSubmit = async (event: React.FormEvent) => {
@@ -77,41 +86,37 @@ export const Settings: React.FC = () => {
   };
 
   return (
-    <Container component="main" maxWidth="sm">
-      <Box
-        sx={{
-          marginTop: 8,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-        }}
-      >
-        <Paper elevation={3} sx={{ p: 4, width: '100%' }}>
-          <Typography component="h1" variant="h5" sx={{ mb: 3 }}>
+    <Container maxWidth="sm">
+      <Box sx={{ mt: 4 }}>
+        <Paper sx={{ p: 4 }}>
+          <Typography variant="h5" gutterBottom>
             Settings
           </Typography>
-          <Box component="form" onSubmit={handleSubmit} noValidate>
+          <form onSubmit={handleSubmit}>
             <Stack spacing={3}>
               <TextField
-                fullWidth
                 label="First Name"
                 value={form.firstName}
                 onChange={handleChange('firstName')}
+                fullWidth
               />
               <TextField
-                fullWidth
                 label="Last Name"
                 value={form.lastName}
                 onChange={handleChange('lastName')}
+                fullWidth
               />
+              <Divider />
               <FormControlLabel
                 control={
                   <Switch
                     checked={form.darkMode}
                     onChange={handleChange('darkMode')}
+                    icon={<Brightness4Icon />}
+                    checkedIcon={<Brightness7Icon />}
                   />
                 }
-                label="Dark Mode"
+                label={`${isDarkMode ? 'Dark' : 'Light'} Mode`}
               />
               <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
                 <Button
@@ -131,7 +136,7 @@ export const Settings: React.FC = () => {
                 </Button>
               </Box>
             </Stack>
-          </Box>
+          </form>
         </Paper>
       </Box>
     </Container>

@@ -1,16 +1,20 @@
 import React, { useState } from 'react';
-import { AppBar, Toolbar, Typography, IconButton, Menu, MenuItem, Avatar, Box, Button } from '@mui/material';
+import { AppBar, Toolbar, Typography, IconButton, Menu, MenuItem, Avatar, Box, Button, Tooltip } from '@mui/material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import MapIcon from '@mui/icons-material/Map';
 import ListIcon from '@mui/icons-material/List';
 import LoginIcon from '@mui/icons-material/Login';
 import LogoutIcon from '@mui/icons-material/Logout';
+import Brightness4Icon from '@mui/icons-material/Brightness4';
+import Brightness7Icon from '@mui/icons-material/Brightness7';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 
 const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
+  const { isDarkMode, toggleDarkMode } = useTheme();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
   const handleMenu = (event: React.MouseEvent<HTMLElement>) => {
@@ -39,6 +43,11 @@ const Navbar = () => {
           Plana
         </Typography>
         <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+          <Tooltip title={isDarkMode ? 'Light mode' : 'Dark mode'}>
+            <IconButton color="inherit" onClick={toggleDarkMode}>
+              {isDarkMode ? <Brightness7Icon /> : <Brightness4Icon />}
+            </IconButton>
+          </Tooltip>
           <Button
             color="inherit"
             startIcon={<MapIcon />}

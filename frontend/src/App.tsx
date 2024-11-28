@@ -1,12 +1,13 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { GoogleOAuthProvider } from '@react-oauth/google';
-import { ThemeProvider, createTheme, CssBaseline } from '@mui/material';
+import { CssBaseline } from '@mui/material';
 import { Login } from './pages/Login';
 import MapView from './pages/MapView';
 import ListView from './pages/ListView';
 import Navbar from './components/Navbar';
 import { AuthProvider } from './contexts/AuthContext';
+import { ThemeProvider } from './contexts/ThemeContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { Settings } from './pages/Settings';
 
@@ -18,52 +19,52 @@ const AppContent = () => {
 
   return (
     <AuthProvider>
-      <div className="App">
-        {showNavbar && <Navbar />}
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route
-            path="/map"
-            element={
-              <ProtectedRoute>
-                <MapView />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/list"
-            element={
-              <ProtectedRoute>
-                <ListView />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/settings"
-            element={
-              <ProtectedRoute>
-                <Settings />
-              </ProtectedRoute>
-            }
-          />
-          <Route path="/" element={<Navigate to="/login" replace />} />
-        </Routes>
-      </div>
+      <ThemeProvider>
+        <CssBaseline />
+        <div className="App">
+          {showNavbar && <Navbar />}
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route
+              path="/map"
+              element={
+                <ProtectedRoute>
+                  <MapView />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/list"
+              element={
+                <ProtectedRoute>
+                  <ListView />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/settings"
+              element={
+                <ProtectedRoute>
+                  <Settings />
+                </ProtectedRoute>
+              }
+            />
+            <Route path="/" element={<Navigate to="/login" replace />} />
+          </Routes>
+        </div>
+      </ThemeProvider>
     </AuthProvider>
   );
 };
 
-function App() {
+const App = () => {
   return (
     <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
-      <ThemeProvider theme={createTheme()}>
-        <CssBaseline />
-        <Router>
-          <AppContent />
-        </Router>
-      </ThemeProvider>
+      <Router>
+        <AppContent />
+      </Router>
     </GoogleOAuthProvider>
   );
-}
+};
 
 export default App;
