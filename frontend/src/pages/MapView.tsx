@@ -84,7 +84,7 @@ const MapView = () => {
   }
 
   return (
-    <Box sx={{ height: 'calc(100vh - 64px)', position: 'relative' }}>
+    <Box sx={{ height: 'calc(100vh - 56px)', position: 'relative' }}>
       <GoogleMap
         zoom={13}
         center={center}
