@@ -11,6 +11,8 @@ import BottomNav from './components/BottomNav';
 import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import { PlacesAdmin } from './pages/admin/PlacesAdmin';
+import { EventsAdmin } from './pages/admin/EventsAdmin';
 
 const GOOGLE_CLIENT_ID = process.env.REACT_APP_GOOGLE_CLIENT_ID || '';
 
@@ -25,6 +27,10 @@ const AppContent = () => {
         <Box sx={{ pb: showBottomNav ? 7 : 0 }}>
           <Routes>
             <Route path="/login" element={<Login />} />
+            <Route
+              path="/"
+              element={<Navigate to="/map" />}
+            />
             <Route
               path="/map"
               element={
@@ -42,7 +48,7 @@ const AppContent = () => {
               }
             />
             <Route
-              path="/list"
+              path="/events"
               element={
                 <ProtectedRoute>
                   <ListView />
@@ -57,7 +63,22 @@ const AppContent = () => {
                 </ProtectedRoute>
               }
             />
-            <Route path="/" element={<Navigate to="/map" replace />} />
+            <Route
+              path="/admin/places"
+              element={
+                <ProtectedRoute>
+                  <PlacesAdmin />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/events"
+              element={
+                <ProtectedRoute>
+                  <EventsAdmin />
+                </ProtectedRoute>
+              }
+            />
           </Routes>
           {showBottomNav && <BottomNav />}
         </Box>

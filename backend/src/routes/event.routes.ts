@@ -5,7 +5,7 @@ import { AppError } from '../middleware/error.middleware';
 
 const router = express.Router();
 
-// Get all events with optional filtering
+// Public routes
 router.get('/', async (req, res, next) => {
   try {
     const { lat, lng, distance = 10000, category } = req.query;
@@ -46,26 +46,6 @@ router.get('/', async (req, res, next) => {
   }
 });
 
-// Create new event
-router.post('/', protect, async (req, res, next) => {
-  try {
-    const event = await Event.create({
-      ...req.body,
-      organizer: req.user._id,
-    });
-
-    res.status(201).json({
-      status: 'success',
-      data: {
-        event,
-      },
-    });
-  } catch (error) {
-    next(error);
-  }
-});
-
-// Get single event
 router.get('/:id', async (req, res, next) => {
   try {
     const event = await Event.findById(req.params.id)
@@ -87,8 +67,28 @@ router.get('/:id', async (req, res, next) => {
   }
 });
 
-// Update event
-router.patch('/:id', protect, async (req, res, next) => {
+// Protected routes (require authentication)
+router.use(protect);
+
+router.post('/', async (req, res, next) => {
+  try {
+    const event = await Event.create({
+      ...req.body,
+      organizer: req.user._id,
+    });
+
+    res.status(201).json({
+      status: 'success',
+      data: {
+        event,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.patch('/:id', async (req, res, next) => {
   try {
     const event = await Event.findById(req.params.id);
 
@@ -117,8 +117,7 @@ router.patch('/:id', protect, async (req, res, next) => {
   }
 });
 
-// Delete event
-router.delete('/:id', protect, async (req, res, next) => {
+router.delete('/:id', async (req, res, next) => {
   try {
     const event = await Event.findById(req.params.id);
 
@@ -142,8 +141,7 @@ router.delete('/:id', protect, async (req, res, next) => {
   }
 });
 
-// Attend event
-router.post('/:id/attend', protect, async (req, res, next) => {
+router.post('/:id/attend', async (req, res, next) => {
   try {
     const event = await Event.findById(req.params.id);
 

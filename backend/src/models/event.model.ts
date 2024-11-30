@@ -1,101 +1,65 @@
 import mongoose from 'mongoose';
-
-interface ILocation {
-  type: string;
-  coordinates: number[];
-  address: string;
-}
+import { IPlace } from './place.model';
 
 interface IEvent extends mongoose.Document {
-  title: string;
-  description: string;
+  name: string;
+  place: mongoose.Types.ObjectId | IPlace;
   date: Date;
-  location: ILocation;
-  category: string;
-  organizer: mongoose.Types.ObjectId;
-  attendees: mongoose.Types.ObjectId[];
-  image: string;
   price: number;
-  capacity: number;
+  picture?: string;
+  link?: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 const eventSchema = new mongoose.Schema(
   {
-    title: {
+    name: {
       type: String,
-      required: [true, 'Please provide event title'],
+      required: [true, 'Event name is required'],
       trim: true,
     },
-    description: {
-      type: String,
-      required: [true, 'Please provide event description'],
+    place: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Place',
+      required: [true, 'Place is required'],
     },
     date: {
       type: Date,
-      required: [true, 'Please provide event date'],
-    },
-    location: {
-      type: {
-        type: String,
-        enum: ['Point'],
-        required: true,
-      },
-      coordinates: {
-        type: [Number],
-        required: true,
-      },
-      address: {
-        type: String,
-        required: true,
-      },
-    },
-    category: {
-      type: String,
-      required: [true, 'Please provide event category'],
-      enum: ['Music', 'Food & Drink', 'Sports', 'Art', 'Technology', 'Other'],
-    },
-    organizer: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      required: true,
-    },
-    attendees: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-      },
-    ],
-    image: {
-      type: String,
-      default: 'default-event.jpg',
+      required: [true, 'Event date is required'],
+      validate: {
+        validator: function(v: Date) {
+          return v > new Date();
+        },
+        message: 'Event date must be in the future'
+      }
     },
     price: {
       type: Number,
-      default: 0,
+      required: [true, 'Price is required'],
+      min: [0, 'Price cannot be negative'],
     },
-    capacity: {
-      type: Number,
-      default: 0, // 0 means unlimited
-    }
+    picture: {
+      type: String,
+      trim: true,
+    },
+    link: {
+      type: String,
+      trim: true,
+      validate: {
+        validator: function(v: string) {
+          return !v || validator.isURL(v);
+        },
+        message: 'Invalid URL format'
+      }
+    },
   },
   {
     timestamps: true,
-    toJSON: { virtuals: true },
-    toObject: { virtuals: true },
   }
 );
 
-// Create geospatial index
-eventSchema.index({ location: '2dsphere' });
-
-// Virtual populate
-eventSchema.virtual('attendeeCount').get(function () {
-  return this.attendees.length;
-});
-
-// Virtual for checking if event is full
-eventSchema.virtual('isFull').get(function () {
-  return this.capacity > 0 && this.attendees.length >= this.capacity;
-});
+// Create compound index for efficient querying
+eventSchema.index({ place: 1, date: 1 });
 
 export const Event = mongoose.model<IEvent>('Event', eventSchema);
