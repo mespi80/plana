@@ -49,7 +49,7 @@ export const googleAuth = async (req: Request, res: Response): Promise<void> => 
       return;
     }
 
-    // Find or create user
+    // Find existing user or create new one
     let user = await User.findOne({ email });
     
     if (!user) {
@@ -59,13 +59,11 @@ export const googleAuth = async (req: Request, res: Response): Promise<void> => 
         firstName: given_name || '',
         lastName: family_name || '',
         profilePicture: picture,
-        authProvider: 'google',
         googleId,
-        role: 'host'
+        role: 'user'
       });
     } else {
       console.log('Updating existing user...');
-      // Update existing user's information
       user.firstName = given_name || user.firstName;
       user.lastName = family_name || user.lastName;
       user.profilePicture = picture || user.profilePicture;
@@ -73,10 +71,9 @@ export const googleAuth = async (req: Request, res: Response): Promise<void> => 
       await user.save();
     }
 
-    console.log('Generating JWT token...');
     // Generate JWT token
     const token = jwt.sign(
-      { userId: user._id },
+      { id: user._id },
       process.env.JWT_SECRET || 'your-secret-key',
       { expiresIn: '24h' }
     );
@@ -94,8 +91,8 @@ export const googleAuth = async (req: Request, res: Response): Promise<void> => 
       }
     });
   } catch (error) {
-    console.error('Google auth error:', error);
-    res.status(401).json({ 
+    console.error('Authentication error:', error);
+    res.status(401).json({
       error: 'Authentication failed',
       details: error instanceof Error ? error.message : 'Unknown error'
     });
@@ -117,10 +114,10 @@ export const validateToken = async (req: Request, res: Response): Promise<void> 
     }
 
     console.log('Verifying JWT token...');
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key') as { userId: string };
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key') as { id: string };
     
     console.log('Finding user...');
-    const user = await User.findById(decoded.userId);
+    const user = await User.findById(decoded.id);
 
     if (!user) {
       console.error('User not found');

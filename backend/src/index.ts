@@ -7,6 +7,7 @@ import mongoose from 'mongoose';
 import authRoutes from './routes/auth.routes';
 import eventRoutes from './routes/event.routes';
 import userRoutes from './routes/user.routes';
+import placeRoutes from './routes/place.routes';
 import { errorHandler } from './middleware/error.middleware';
 
 dotenv.config();
@@ -14,33 +15,36 @@ dotenv.config();
 const app = express();
 const port = parseInt(process.env.PORT || '10000', 10);
 
-// Basic CORS setup
-app.use(cors());
+// CORS configuration
+const corsOptions = {
+  origin: ['https://plana-two.vercel.app', 'http://localhost:3000'],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+};
 
-// Specific CORS for routes
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', 'https://plana-two.vercel.app');
-  res.header('Access-Control-Allow-Credentials', 'true');
-  res.header('Access-Control-Allow-Methods', 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
-  
-  // Handle preflight
-  if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
-  }
-  
-  next();
-});
+app.use(cors(corsOptions));
 
 app.use(express.json());
 app.use(morgan('dev'));
 app.use(express.urlencoded({ extended: true }));
 
+// MongoDB Connection
+mongoose
+  .connect(process.env.MONGODB_URI!)
+  .then(() => {
+    console.log('Connected to MongoDB');
+  })
+  .catch((error) => {
+    console.error('MongoDB connection error:', error);
+    process.exit(1);
+  });
+
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/places', placeRoutes);
 
 // Health check endpoint
 app.get('/api/health', (_req: Request, res: Response) => {
@@ -55,16 +59,7 @@ app.get('/api/health', (_req: Request, res: Response) => {
 // Error handling
 app.use(errorHandler);
 
-// Database connection
-mongoose
-  .connect(process.env.MONGODB_URI!)
-  .then(() => {
-    console.log('Connected to MongoDB');
-    app.listen(port, '0.0.0.0', () => {
-      console.log(`Server is running on port ${port}`);
-    });
-  })
-  .catch((error) => {
-    console.error('MongoDB connection error:', error);
-    process.exit(1);
-  });
+// Start server
+app.listen(port, '0.0.0.0', () => {
+  console.log(`Server is running on port ${port}`);
+});
