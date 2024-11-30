@@ -1,13 +1,24 @@
 import React, { useState } from 'react';
 import { GoogleLogin } from '@react-oauth/google';
 import { useAuth } from '../contexts/AuthContext';
-import { Box, Typography, Alert, Snackbar, CircularProgress } from '@mui/material';
+import { 
+  Box, 
+  Typography, 
+  Alert, 
+  Snackbar, 
+  CircularProgress, 
+  Paper,
+  Container,
+  useTheme
+} from '@mui/material';
 import { API_ENDPOINTS } from '../config/api';
+import EventIcon from '@mui/icons-material/Event';
 
 export const Login: React.FC = () => {
   const { login, isLoading } = useAuth();
   const [error, setError] = useState<string>('');
   const [isAuthenticating, setIsAuthenticating] = useState(false);
+  const theme = useTheme();
 
   const handleGoogleSuccess = async (credentialResponse: any) => {
     try {
@@ -55,10 +66,10 @@ export const Login: React.FC = () => {
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
-          background: 'linear-gradient(45deg, #FE6B8B 30%, #FF8E53 90%)',
+          bgcolor: 'background.default',
         }}
       >
-        <CircularProgress sx={{ color: 'white' }} />
+        <CircularProgress sx={{ color: theme.palette.primary.main }} />
       </Box>
     );
   }
@@ -66,66 +77,110 @@ export const Login: React.FC = () => {
   return (
     <Box
       sx={{
-        height: '100vh',
+        minHeight: '100vh',
         display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: 'linear-gradient(45deg, #FE6B8B 30%, #FF8E53 90%)',
+        bgcolor: 'background.default',
+        py: 8,
       }}
     >
-      <Box
-        sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: 4,
-        }}
-      >
-        <Typography
-          component="h1"
-          variant="h2"
+      <Container maxWidth="sm">
+        <Paper
+          elevation={3}
           sx={{
-            color: 'white',
-            fontWeight: 'bold',
-            textShadow: '2px 2px 4px rgba(0,0,0,0.2)',
-            mb: 2,
+            p: 4,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            borderRadius: 2,
+            background: `linear-gradient(to bottom right, ${theme.palette.background.paper}, ${theme.palette.background.default})`,
           }}
         >
-          Plana
-        </Typography>
-        <Typography
-          variant="h6"
-          sx={{
-            color: 'white',
-            textAlign: 'center',
-            mb: 4,
-            textShadow: '1px 1px 2px rgba(0,0,0,0.2)',
-          }}
-        >
-          Discover Events Around You
-        </Typography>
-        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-          <GoogleLogin
-            onSuccess={handleGoogleSuccess}
-            onError={() => {
-              console.error('Login Failed');
-              setError('Google login failed');
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: 3,
             }}
-            useOneTap
-            theme="filled_blue"
-            size="large"
-            shape="pill"
-          />
-        </Box>
-      </Box>
+          >
+            <EventIcon 
+              sx={{ 
+                fontSize: 48, 
+                color: theme.palette.primary.main,
+                mb: 2
+              }} 
+            />
+            <Typography
+              component="h1"
+              variant="h3"
+              sx={{
+                color: 'text.primary',
+                fontWeight: 'bold',
+                textAlign: 'center',
+              }}
+            >
+              Welcome to Plana
+            </Typography>
+            <Typography
+              variant="h6"
+              sx={{
+                color: 'text.secondary',
+                textAlign: 'center',
+                maxWidth: '80%',
+                mb: 4,
+              }}
+            >
+              Discover and explore amazing events around you
+            </Typography>
+            <Box 
+              sx={{ 
+                display: 'flex', 
+                flexDirection: 'column', 
+                alignItems: 'center',
+                gap: 2,
+                width: '100%',
+                maxWidth: 320,
+              }}
+            >
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={() => {
+                  console.error('Login Failed');
+                  setError('Google login failed');
+                }}
+                useOneTap
+                theme="filled_blue"
+                size="large"
+                shape="pill"
+              />
+              <Typography
+                variant="body2"
+                sx={{
+                  color: 'text.secondary',
+                  textAlign: 'center',
+                  mt: 2,
+                }}
+              >
+                Sign in with your Google account to continue
+              </Typography>
+            </Box>
+          </Box>
+        </Paper>
+      </Container>
       <Snackbar 
         open={!!error} 
         autoHideDuration={6000} 
         onClose={() => setError('')}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
-        <Alert onClose={() => setError('')} severity="error" sx={{ width: '100%' }}>
+        <Alert 
+          onClose={() => setError('')} 
+          severity="error" 
+          sx={{ 
+            width: '100%',
+            boxShadow: theme.shadows[3],
+          }}
+        >
           {error}
         </Alert>
       </Snackbar>
