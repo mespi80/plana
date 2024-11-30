@@ -1,106 +1,97 @@
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
-import { User } from '../models/user.model';
+import { Place } from '../models/place.model';
 import { Event } from '../models/event.model';
 
 dotenv.config();
 
-const sampleUsers = [
-  {
-    name: 'John Doe',
-    email: 'john@example.com',
-    password: 'password123',
-  },
-  {
-    name: 'Jane Smith',
-    email: 'jane@example.com',
-    password: 'password123',
-  },
-];
-
-const sampleEvents = [
-  {
-    title: 'Tech Meetup',
-    description: 'Monthly tech meetup for developers',
-    date: new Date('2024-02-01'),
-    location: {
-      type: 'Point',
-      coordinates: [-122.4194, 37.7749], // San Francisco coordinates
-      address: '123 Tech Street, San Francisco, CA',
-    },
-    category: 'Technology',
-    price: 0,
-    capacity: 50,
-  },
-  {
-    title: 'Music Festival',
-    description: 'Annual music festival featuring local bands',
-    date: new Date('2024-02-15'),
-    location: {
-      type: 'Point',
-      coordinates: [-122.4314, 37.7793], // Different SF location
-      address: '456 Music Avenue, San Francisco, CA',
-    },
-    category: 'Music',
-    price: 25,
-    capacity: 200,
-  },
-  {
-    title: 'Food & Wine Tasting',
-    description: 'Explore local cuisines and wines',
-    date: new Date('2024-02-10'),
-    location: {
-      type: 'Point',
-      coordinates: [-122.4124, 37.7884], // Another SF location
-      address: '789 Food Street, San Francisco, CA',
-    },
-    category: 'Food & Drink',
-    price: 45,
-    capacity: 30,
-  },
-];
-
-async function seedDatabase() {
+const seedDatabase = async () => {
   try {
     // Connect to MongoDB
     await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/plana');
     console.log('Connected to MongoDB');
 
     // Clear existing data
-    await User.deleteMany({});
+    await Place.deleteMany({});
     await Event.deleteMany({});
-    console.log('Cleared existing data');
 
-    // Create users
-    const createdUsers = await User.create(sampleUsers);
-    console.log('Created sample users');
+    // Create sample places
+    const places = await Place.create([
+      {
+        name: 'The Grand Hall',
+        address: '123 Main St, San Francisco, CA 94105',
+        location: {
+          type: 'Point',
+          coordinates: [-122.419416, 37.774929],
+        },
+        types: ['venue'],
+        capacity: 500,
+        picture: 'https://example.com/grand-hall.jpg',
+        link: 'https://grandhall.com',
+      },
+      {
+        name: 'City Park Amphitheater',
+        address: '456 Park Ave, San Francisco, CA 94102',
+        location: {
+          type: 'Point',
+          coordinates: [-122.431297, 37.769042],
+        },
+        types: ['venue', 'park'],
+        capacity: 1000,
+        picture: 'https://example.com/amphitheater.jpg',
+        link: 'https://sfparks.org/amphitheater',
+      },
+      {
+        name: 'The Blue Note Jazz Club',
+        address: '789 Jazz St, San Francisco, CA 94103',
+        location: {
+          type: 'Point',
+          coordinates: [-122.412223, 37.783579],
+        },
+        types: ['club', 'venue'],
+        capacity: 200,
+        picture: 'https://example.com/blue-note.jpg',
+        link: 'https://bluenotesf.com',
+      },
+    ]);
 
-    // Create events with random organizers
-    const eventsWithOrganizers = sampleEvents.map(event => ({
-      ...event,
-      organizer: createdUsers[Math.floor(Math.random() * createdUsers.length)]._id,
-    }));
+    // Create sample events
+    const events = await Event.create([
+      {
+        name: 'Summer Music Festival',
+        place: places[0]._id,
+        date: new Date('2024-07-15T18:00:00'),
+        price: 50,
+        picture: 'https://example.com/summer-fest.jpg',
+        link: 'https://summerfest.com',
+      },
+      {
+        name: 'Shakespeare in the Park',
+        place: places[1]._id,
+        date: new Date('2024-06-20T19:30:00'),
+        price: 0,
+        picture: 'https://example.com/shakespeare.jpg',
+        link: 'https://sfshakes.org',
+      },
+      {
+        name: 'Jazz Night',
+        place: places[2]._id,
+        date: new Date('2024-05-10T20:00:00'),
+        price: 25,
+        picture: 'https://example.com/jazz-night.jpg',
+        link: 'https://jazznight.com',
+      },
+    ]);
 
-    await Event.create(eventsWithOrganizers);
-    console.log('Created sample events');
+    console.log('Database seeded successfully!');
+    console.log(`Created ${places.length} places`);
+    console.log(`Created ${events.length} events`);
 
-    // Add random attendees to events
-    const events = await Event.find({});
-    for (const event of events) {
-      const randomAttendees = createdUsers
-        .filter(() => Math.random() > 0.5)
-        .map(user => user._id);
-      event.attendees = randomAttendees;
-      await event.save();
-    }
-    console.log('Added random attendees to events');
-
-    console.log('Database seeding completed successfully');
   } catch (error) {
     console.error('Error seeding database:', error);
   } finally {
     await mongoose.connection.close();
   }
-}
+};
 
 seedDatabase();

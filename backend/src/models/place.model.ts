@@ -1,11 +1,12 @@
 import mongoose from 'mongoose';
+import validator from 'validator';
 
 export interface IPlace extends mongoose.Document {
   name: string;
   address: string;
   location: {
     type: string;
-    coordinates: [number, number]; // [longitude, latitude]
+    coordinates: number[];
   };
   types: string[];
   capacity: number;
@@ -43,24 +44,19 @@ const placeSchema = new mongoose.Schema(
                    v[0] >= -180 && v[0] <= 180 && // longitude
                    v[1] >= -90 && v[1] <= 90;     // latitude
           },
-          message: 'Invalid coordinates'
+          message: 'Invalid coordinates format. Use [longitude, latitude] within valid ranges.'
         }
       }
     },
     types: {
       type: [String],
       required: [true, 'At least one place type is required'],
-      validate: {
-        validator: function(v: string[]) {
-          return v.length > 0;
-        },
-        message: 'At least one place type is required'
-      }
+      enum: ['restaurant', 'bar', 'club', 'venue', 'park', 'theater', 'museum', 'gallery', 'other'],
     },
     capacity: {
       type: Number,
       required: [true, 'Capacity is required'],
-      min: [0, 'Capacity cannot be negative'],
+      min: [1, 'Capacity must be at least 1'],
     },
     picture: {
       type: String,
@@ -82,7 +78,7 @@ const placeSchema = new mongoose.Schema(
   }
 );
 
-// Create a 2dsphere index for geospatial queries
+// Create geospatial index for location-based queries
 placeSchema.index({ location: '2dsphere' });
 
 export const Place = mongoose.model<IPlace>('Place', placeSchema);
