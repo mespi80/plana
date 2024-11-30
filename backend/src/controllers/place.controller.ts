@@ -87,5 +87,34 @@ export const placeController = {
     } catch (error) {
       return res.status(400).json({ success: false, error: error.message });
     }
+  },
+
+  // Get places within bounds
+  getPlacesInBounds: async (req: Request, res: Response): Promise<Response> => {
+    try {
+      const { ne, sw } = req.body;
+
+      if (!ne || !sw || !ne.lat || !ne.lng || !sw.lat || !sw.lng) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Invalid bounds. Please provide ne and sw coordinates.' 
+        });
+      }
+
+      const places = await Place.find({
+        location: {
+          $geoWithin: {
+            $box: [
+              [sw.lng, sw.lat], // [longitude, latitude]
+              [ne.lng, ne.lat]
+            ]
+          }
+        }
+      });
+
+      return res.status(200).json({ success: true, data: places });
+    } catch (error) {
+      return res.status(400).json({ success: false, error: error.message });
+    }
   }
 };

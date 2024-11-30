@@ -12,6 +12,7 @@ router.get('/:id', placeController.getById);
 // Protected routes (require authentication)
 router.use(authenticateToken);
 router.post('/', placeController.create);
+router.post('/bounds', placeController.getPlacesInBounds);
 router.put('/:id', placeController.update);
 router.delete('/:id', placeController.delete);
 

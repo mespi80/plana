@@ -214,10 +214,6 @@ export const PlacesAdmin = () => {
 
   return (
     <Box sx={{ pb: 7, px: 2, pt: 2 }}>
-      <Typography variant="h5" sx={{ mb: 2 }}>
-        Places Management
-      </Typography>
-
       <Button
         variant="contained"
         color="primary"

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { GoogleMap, useLoadScript, MarkerF } from '@react-google-maps/api';
 import {
   Box,
@@ -14,21 +14,73 @@ import {
   Alert,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
+import { API_ENDPOINTS } from '../config/api';
+import { useAuth } from '../contexts/AuthContext';
 
 interface Location {
   lat: number;
   lng: number;
 }
 
+interface Place {
+  _id: string;
+  name: string;
+  description: string;
+  location: {
+    type: string;
+    coordinates: [number, number]; // [longitude, latitude]
+  };
+  address: string;
+  type: string;
+}
+
+interface MapBounds {
+  ne: Location;
+  sw: Location;
+}
+
 const MapView = () => {
-  const [selectedEvent, setSelectedEvent] = useState<any>(null);
+  const { token } = useAuth();
+  const [selectedPlace, setSelectedPlace] = useState<Place | null>(null);
+  const [places, setPlaces] = useState<Place[]>([]);
   const [center, setCenter] = useState<Location>({ lat: 37.7749, lng: -122.4194 }); // Default to San Francisco
   const [error, setError] = useState<string>('');
   const [isLocating, setIsLocating] = useState(true);
+  const [mapBounds, setMapBounds] = useState<MapBounds | null>(null);
 
   const { isLoaded } = useLoadScript({
     googleMapsApiKey: process.env.REACT_APP_GOOGLE_MAPS_API_KEY || '',
   });
+
+  const fetchPlaces = useCallback(async (bounds: MapBounds) => {
+    try {
+      const response = await fetch(`${API_ENDPOINTS.PLACES}/bounds`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          ne: bounds.ne,
+          sw: bounds.sw,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch places');
+      }
+
+      const data = await response.json();
+      if (data.success) {
+        setPlaces(data.data);
+      } else {
+        throw new Error(data.error || 'Failed to fetch places');
+      }
+    } catch (error) {
+      console.error('Error fetching places:', error);
+      setError(error instanceof Error ? error.message : 'Failed to fetch places');
+    }
+  }, [token]);
 
   useEffect(() => {
     if ('geolocation' in navigator) {
@@ -57,23 +109,33 @@ const MapView = () => {
     }
   }, []);
 
-  // Mock events data - replace with API call
-  const events = [
-    {
-      id: 1,
-      title: 'Music Festival',
-      description: 'Annual music festival featuring local bands',
-      location: { lat: 37.7749, lng: -122.4194 },
-      date: '2023-06-15',
-    },
-    {
-      id: 2,
-      title: 'Food Fair',
-      description: 'Street food festival with local vendors',
-      location: { lat: 37.7848, lng: -122.4294 },
-      date: '2023-06-20',
-    },
-  ];
+  useEffect(() => {
+    if (mapBounds) {
+      fetchPlaces(mapBounds);
+    }
+  }, [mapBounds, fetchPlaces]);
+
+  const mapRef = useRef<google.maps.Map>();
+  const handleBoundsChanged = useCallback(() => {
+    if (!mapRef.current) return;
+    const bounds = mapRef.current.getBounds();
+    if (bounds) {
+      const ne = bounds.getNorthEast();
+      const sw = bounds.getSouthWest();
+      setMapBounds({
+        ne: { lat: ne.lat(), lng: ne.lng() },
+        sw: { lat: sw.lat(), lng: sw.lng() },
+      });
+    }
+  }, []);
+
+  const onLoad = useCallback((map: google.maps.Map) => {
+    mapRef.current = map;
+  }, []);
+
+  const onUnmount = useCallback(() => {
+    mapRef.current = undefined;
+  }, []);
 
   if (!isLoaded || isLocating) {
     return (
@@ -85,11 +147,6 @@ const MapView = () => {
 
   return (
     <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <Box sx={{ px: 2, pt: 2, pb: 1 }}>
-        <Typography variant="h5" sx={{ mb: 2 }}>
-          Events nearby
-        </Typography>
-      </Box>
       <Box sx={{ flex: 1, position: 'relative' }}>
         <GoogleMap
           zoom={13}
@@ -101,37 +158,46 @@ const MapView = () => {
             mapTypeControl: false,
             fullscreenControl: false,
           }}
+          onLoad={onLoad}
+          onUnmount={onUnmount}
+          onBoundsChanged={handleBoundsChanged}
         >
-          {events.map((event) => (
+          {places.map((place) => (
             <MarkerF
-              key={event.id}
-              position={event.location}
-              onClick={() => setSelectedEvent(event)}
+              key={place._id}
+              position={{
+                lat: place.location.coordinates[1],
+                lng: place.location.coordinates[0],
+              }}
+              onClick={() => setSelectedPlace(place)}
             />
           ))}
         </GoogleMap>
 
         <Drawer
           anchor="right"
-          open={!!selectedEvent}
-          onClose={() => setSelectedEvent(null)}
+          open={!!selectedPlace}
+          onClose={() => setSelectedPlace(null)}
           PaperProps={{
             sx: { width: '300px' },
           }}
         >
-          {selectedEvent && (
+          {selectedPlace && (
             <Box sx={{ p: 2 }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                <Typography variant="h6">{selectedEvent.title}</Typography>
-                <IconButton onClick={() => setSelectedEvent(null)}>
+                <Typography variant="h6">{selectedPlace.name}</Typography>
+                <IconButton onClick={() => setSelectedPlace(null)}>
                   <CloseIcon />
                 </IconButton>
               </Box>
               <Typography variant="body1" color="text.secondary" paragraph>
-                {selectedEvent.description}
+                {selectedPlace.description}
+              </Typography>
+              <Typography variant="body2" color="text.secondary" gutterBottom>
+                Type: {selectedPlace.type}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                Date: {selectedEvent.date}
+                Address: {selectedPlace.address}
               </Typography>
             </Box>
           )}

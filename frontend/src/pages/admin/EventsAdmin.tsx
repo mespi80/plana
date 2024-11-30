@@ -224,10 +224,6 @@ const EventsAdmin: React.FC = () => {
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-        <Typography variant="h4" gutterBottom>
-          Manage Events
-        </Typography>
-        
         <Button 
           variant="contained" 
           color="primary" 

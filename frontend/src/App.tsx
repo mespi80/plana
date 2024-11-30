@@ -13,6 +13,7 @@ import { ThemeProvider } from './contexts/ThemeContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { PlacesAdmin } from './pages/admin/PlacesAdmin';
 import EventsAdmin from './pages/admin/EventsAdmin';
+import { Layout } from './components/Layout';
 
 const GOOGLE_CLIENT_ID = process.env.REACT_APP_GOOGLE_CLIENT_ID || '';
 
@@ -35,7 +36,9 @@ const AppContent = () => {
               path="/map"
               element={
                 <ProtectedRoute>
-                  <MapView />
+                  <Layout>
+                    <MapView />
+                  </Layout>
                 </ProtectedRoute>
               }
             />
@@ -43,7 +46,9 @@ const AppContent = () => {
               path="/search"
               element={
                 <ProtectedRoute>
-                  <Search />
+                  <Layout>
+                    <Search />
+                  </Layout>
                 </ProtectedRoute>
               }
             />
@@ -51,7 +56,9 @@ const AppContent = () => {
               path="/events"
               element={
                 <ProtectedRoute>
-                  <ListView />
+                  <Layout>
+                    <ListView />
+                  </Layout>
                 </ProtectedRoute>
               }
             />
@@ -59,7 +66,9 @@ const AppContent = () => {
               path="/settings"
               element={
                 <ProtectedRoute>
-                  <Settings />
+                  <Layout>
+                    <Settings />
+                  </Layout>
                 </ProtectedRoute>
               }
             />
@@ -67,7 +76,9 @@ const AppContent = () => {
               path="/admin/places"
               element={
                 <ProtectedRoute>
-                  <PlacesAdmin />
+                  <Layout>
+                    <PlacesAdmin />
+                  </Layout>
                 </ProtectedRoute>
               }
             />
@@ -75,7 +86,9 @@ const AppContent = () => {
               path="/admin/events"
               element={
                 <ProtectedRoute>
-                  <EventsAdmin />
+                  <Layout>
+                    <EventsAdmin />
+                  </Layout>
                 </ProtectedRoute>
               }
             />

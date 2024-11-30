@@ -83,10 +83,6 @@ export const Settings: React.FC = () => {
 
   return (
     <Box sx={{ pb: 7, px: 2, pt: 2 }}>
-      <Typography variant="h5" sx={{ mb: 2 }}>
-        Settings
-      </Typography>
-
       <Paper sx={{ p: 3, borderRadius: 2 }}>
         <form onSubmit={handleSubmit}>
           <Stack spacing={3}>
