@@ -12,7 +12,6 @@ import {
   useTheme
 } from '@mui/material';
 import { API_ENDPOINTS } from '../config/api';
-import EventIcon from '@mui/icons-material/Event';
 
 export const Login: React.FC = () => {
   const { login, isLoading } = useAuth();
@@ -103,12 +102,15 @@ export const Login: React.FC = () => {
               gap: 3,
             }}
           >
-            <EventIcon 
-              sx={{ 
-                fontSize: 48, 
-                color: theme.palette.primary.main,
-                mb: 2
-              }} 
+            <Box
+              component="img"
+              src="/assets/plana-logo.svg"
+              alt="Plana Logo"
+              sx={{
+                width: 120,
+                height: 120,
+                mb: 2,
+              }}
             />
             <Typography
               component="h1"
