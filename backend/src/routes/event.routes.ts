@@ -1,11 +1,11 @@
-import express from 'express';
+import express, { Request, Response } from 'express';
 import { authenticateToken } from '../middleware/auth';
 import { Event } from '../models/event.model';
 
 const router = express.Router();
 
 // Public routes
-router.get('/', async (req, res) => {
+router.get('/', async (req: Request, res: Response): Promise<void> => {
   try {
     const events = await Event.find()
       .populate('place')
@@ -23,7 +23,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-router.get('/upcoming', async (req, res) => {
+router.get('/upcoming', async (req: Request, res: Response): Promise<void> => {
   try {
     const events = await Event.find({
       date: { $gte: new Date() }
@@ -44,16 +44,17 @@ router.get('/upcoming', async (req, res) => {
   }
 });
 
-router.get('/:id', async (req, res) => {
+router.get('/:id', async (req: Request, res: Response): Promise<void> => {
   try {
     const event = await Event.findById(req.params.id)
       .populate('place');
 
     if (!event) {
-      return res.status(404).json({ 
+      res.status(404).json({ 
         success: false, 
         error: 'Event not found' 
       });
+      return;
     }
 
     res.status(200).json({
@@ -68,7 +69,7 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-router.get('/place/:placeId', async (req, res) => {
+router.get('/place/:placeId', async (req: Request, res: Response): Promise<void> => {
   try {
     const events = await Event.find({ place: req.params.placeId })
       .populate('place')
@@ -89,7 +90,7 @@ router.get('/place/:placeId', async (req, res) => {
 // Protected routes (require authentication)
 router.use(authenticateToken);
 
-router.post('/', async (req, res) => {
+router.post('/', async (req: Request, res: Response): Promise<void> => {
   try {
     const event = new Event(req.body);
     await event.save();
@@ -105,7 +106,7 @@ router.post('/', async (req, res) => {
   }
 });
 
-router.put('/:id', async (req, res) => {
+router.put('/:id', async (req: Request, res: Response): Promise<void> => {
   try {
     const event = await Event.findByIdAndUpdate(
       req.params.id,
@@ -114,10 +115,11 @@ router.put('/:id', async (req, res) => {
     ).populate('place');
 
     if (!event) {
-      return res.status(404).json({ 
+      res.status(404).json({ 
         success: false, 
         error: 'Event not found' 
       });
+      return;
     }
 
     res.status(200).json({ 
@@ -132,14 +134,15 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', async (req: Request, res: Response): Promise<void> => {
   try {
     const event = await Event.findByIdAndDelete(req.params.id);
     if (!event) {
-      return res.status(404).json({ 
+      res.status(404).json({ 
         success: false, 
         error: 'Event not found' 
       });
+      return;
     }
     res.status(200).json({ 
       success: true, 
