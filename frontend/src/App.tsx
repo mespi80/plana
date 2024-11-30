@@ -12,7 +12,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { PlacesAdmin } from './pages/admin/PlacesAdmin';
-import { EventsAdmin } from './pages/admin/EventsAdmin';
+import EventsAdmin from './pages/admin/EventsAdmin';
 
 const GOOGLE_CLIENT_ID = process.env.REACT_APP_GOOGLE_CLIENT_ID || '';
 
