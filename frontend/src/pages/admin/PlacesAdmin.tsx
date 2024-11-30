@@ -37,16 +37,15 @@ interface Place {
 }
 
 const PLACE_TYPES = [
-  'Restaurant',
-  'Bar',
-  'Club',
-  'Theater',
-  'Concert Hall',
-  'Sports Venue',
-  'Park',
-  'Museum',
-  'Gallery',
-  'Other'
+  'restaurant',
+  'bar',
+  'club',
+  'venue',
+  'park',
+  'theater',
+  'museum',
+  'gallery',
+  'other'
 ];
 
 const initialFormState = {
@@ -111,20 +110,60 @@ export const PlacesAdmin = () => {
     setEditingId(null);
   };
 
+  const validateForm = () => {
+    if (!formData.name?.trim()) {
+      alert('Name is required');
+      return false;
+    }
+    if (!formData.address?.trim()) {
+      alert('Address is required');
+      return false;
+    }
+    if (!formData.latitude || !formData.longitude) {
+      alert('Both latitude and longitude are required');
+      return false;
+    }
+    if (Number(formData.latitude) < -90 || Number(formData.latitude) > 90) {
+      alert('Latitude must be between -90 and 90');
+      return false;
+    }
+    if (Number(formData.longitude) < -180 || Number(formData.longitude) > 180) {
+      alert('Longitude must be between -180 and 180');
+      return false;
+    }
+    if (!formData.types?.length) {
+      alert('At least one place type is required');
+      return false;
+    }
+    if (!formData.capacity || Number(formData.capacity) < 1) {
+      alert('Capacity must be at least 1');
+      return false;
+    }
+    if (formData.link && !formData.link.match(/^https?:\/\/.+/)) {
+      alert('Link must be a valid URL starting with http:// or https://');
+      return false;
+    }
+    return true;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (!validateForm()) {
+      return;
+    }
+
     const placeData = {
-      name: formData.name,
-      address: formData.address,
+      name: formData.name.trim(),
+      address: formData.address.trim(),
       location: {
         type: 'Point',
         coordinates: [Number(formData.longitude), Number(formData.latitude)]
       },
       types: formData.types,
       capacity: Number(formData.capacity),
-      picture: formData.picture,
-      link: formData.link,
+      picture: formData.picture?.trim() || undefined,
+      link: formData.link?.trim() || undefined,
     };
 
     try {
@@ -141,12 +180,18 @@ export const PlacesAdmin = () => {
         body: JSON.stringify(placeData),
       });
 
+      const data = await response.json();
+
       if (response.ok) {
         handleClose();
         fetchPlaces();
+      } else {
+        console.error('Error saving place:', data.error || 'Unknown error');
+        alert(data.error || 'Failed to save place. Please check the form and try again.');
       }
     } catch (error) {
       console.error('Error saving place:', error);
+      alert('Failed to save place. Please try again.');
     }
   };
 

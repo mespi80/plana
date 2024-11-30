@@ -18,6 +18,8 @@ import {
   IconButton,
   Select,
   MenuItem,
+  FormControl,
+  InputLabel,
 } from '@mui/material';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers';
@@ -82,6 +84,8 @@ const EventsAdmin: React.FC = () => {
       const data = await response.json();
       if (data.success) {
         setEvents(data.data);
+      } else {
+        console.error('Failed to fetch events:', data.error);
       }
     } catch (error) {
       console.error('Error fetching events:', error);
@@ -96,6 +100,8 @@ const EventsAdmin: React.FC = () => {
       const data = await response.json();
       if (data.success) {
         setPlaces(data.data);
+      } else {
+        console.error('Failed to fetch places:', data.error);
       }
     } catch (error) {
       console.error('Error fetching places:', error);
@@ -107,7 +113,7 @@ const EventsAdmin: React.FC = () => {
       setEditingId(event._id);
       setFormData({
         name: event.name,
-        place: event.place._id,
+        place: event.place?._id || '',
         date: dayjs(event.date),
         price: event.price,
         picture: event.picture || '',
@@ -126,8 +132,41 @@ const EventsAdmin: React.FC = () => {
     setEditingId(null);
   };
 
+  const validateForm = () => {
+    if (!formData.name?.trim()) {
+      alert('Name is required');
+      return false;
+    }
+    if (!formData.place) {
+      alert('Place is required');
+      return false;
+    }
+    if (!formData.date) {
+      alert('Date is required');
+      return false;
+    }
+    if (formData.date.isBefore(dayjs())) {
+      alert('Event date must be in the future');
+      return false;
+    }
+    if (formData.price < 0) {
+      alert('Price cannot be negative');
+      return false;
+    }
+    if (formData.link && !formData.link.match(/^https?:\/\/.+/)) {
+      alert('Link must be a valid URL starting with http:// or https://');
+      return false;
+    }
+    return true;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!validateForm()) {
+      return;
+    }
+
     try {
       const url = editingId 
         ? `${API_ENDPOINTS.EVENTS}/${editingId}`
@@ -140,8 +179,12 @@ const EventsAdmin: React.FC = () => {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          ...formData,
+          name: formData.name.trim(),
+          place: formData.place,
           date: formData.date?.toISOString(),
+          price: Number(formData.price),
+          picture: formData.picture?.trim() || undefined,
+          link: formData.link?.trim() || undefined,
         }),
       });
 
@@ -149,9 +192,12 @@ const EventsAdmin: React.FC = () => {
       if (data.success) {
         fetchEvents();
         handleClose();
+      } else {
+        alert(data.error || 'Failed to save event');
       }
     } catch (error) {
       console.error('Error saving event:', error);
+      alert('Failed to save event. Please try again.');
     }
   };
 
@@ -164,9 +210,13 @@ const EventsAdmin: React.FC = () => {
         });
         if (response.ok) {
           fetchEvents();
+        } else {
+          const data = await response.json();
+          alert(data.error || 'Failed to delete event');
         }
       } catch (error) {
         console.error('Error deleting event:', error);
+        alert('Failed to delete event. Please try again.');
       }
     }
   };
@@ -202,7 +252,7 @@ const EventsAdmin: React.FC = () => {
               {events.map((event) => (
                 <TableRow key={event._id}>
                   <TableCell>{event.name}</TableCell>
-                  <TableCell>{event.place.name}</TableCell>
+                  <TableCell>{event.place?.name || 'Unknown Place'}</TableCell>
                   <TableCell>{dayjs(event.date).format('MMM D, YYYY h:mm A')}</TableCell>
                   <TableCell>${event.price}</TableCell>
                   <TableCell>
@@ -232,24 +282,25 @@ const EventsAdmin: React.FC = () => {
                 required
               />
               
-              <Select
-                fullWidth
-                value={formData.place}
-                onChange={(e) => setFormData({ ...formData, place: e.target.value })}
-                margin="dense"
-                required
-              >
-                {places.map((place) => (
-                  <MenuItem key={place._id} value={place._id}>
-                    {place.name}
-                  </MenuItem>
-                ))}
-              </Select>
+              <FormControl fullWidth margin="normal" required>
+                <InputLabel>Place</InputLabel>
+                <Select
+                  value={formData.place}
+                  onChange={(e) => setFormData({ ...formData, place: e.target.value })}
+                  label="Place"
+                >
+                  {places.map((place) => (
+                    <MenuItem key={place._id} value={place._id}>
+                      {place.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
 
               <DateTimePicker
                 label="Date & Time"
                 value={formData.date}
-                onChange={(newValue: Dayjs | null) => newValue && setFormData({ 
+                onChange={(newValue: Dayjs | null) => setFormData({ 
                   ...formData, 
                   date: newValue 
                 })}
