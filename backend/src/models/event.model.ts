@@ -1,7 +1,8 @@
 import mongoose from 'mongoose';
 import { IPlace } from './place.model';
+import validator from 'validator';
 
-interface IEvent extends mongoose.Document {
+export interface IEvent extends mongoose.Document {
   name: string;
   place: mongoose.Types.ObjectId | IPlace;
   date: Date;
