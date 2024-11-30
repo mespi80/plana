@@ -84,63 +84,70 @@ const MapView = () => {
   }
 
   return (
-    <Box sx={{ height: 'calc(100vh - 56px)', position: 'relative' }}>
-      <GoogleMap
-        zoom={13}
-        center={center}
-        mapContainerStyle={{ width: '100%', height: '100%' }}
-        options={{
-          zoomControl: true,
-          streetViewControl: false,
-          mapTypeControl: false,
-          fullscreenControl: false,
-        }}
-      >
-        {events.map((event) => (
-          <MarkerF
-            key={event.id}
-            position={event.location}
-            onClick={() => setSelectedEvent(event)}
-          />
-        ))}
-      </GoogleMap>
+    <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <Box sx={{ px: 2, pt: 2, pb: 1 }}>
+        <Typography variant="h5" sx={{ mb: 2 }}>
+          Events nearby
+        </Typography>
+      </Box>
+      <Box sx={{ flex: 1, position: 'relative' }}>
+        <GoogleMap
+          zoom={13}
+          center={center}
+          mapContainerStyle={{ width: '100%', height: '100%' }}
+          options={{
+            zoomControl: true,
+            streetViewControl: false,
+            mapTypeControl: false,
+            fullscreenControl: false,
+          }}
+        >
+          {events.map((event) => (
+            <MarkerF
+              key={event.id}
+              position={event.location}
+              onClick={() => setSelectedEvent(event)}
+            />
+          ))}
+        </GoogleMap>
 
-      <Drawer
-        anchor="right"
-        open={!!selectedEvent}
-        onClose={() => setSelectedEvent(null)}
-        PaperProps={{
-          sx: { width: '300px' },
-        }}
-      >
-        {selectedEvent && (
-          <Box sx={{ p: 2 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-              <Typography variant="h6">{selectedEvent.title}</Typography>
-              <IconButton onClick={() => setSelectedEvent(null)}>
-                <CloseIcon />
-              </IconButton>
+        <Drawer
+          anchor="right"
+          open={!!selectedEvent}
+          onClose={() => setSelectedEvent(null)}
+          PaperProps={{
+            sx: { width: '300px' },
+          }}
+        >
+          {selectedEvent && (
+            <Box sx={{ p: 2 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                <Typography variant="h6">{selectedEvent.title}</Typography>
+                <IconButton onClick={() => setSelectedEvent(null)}>
+                  <CloseIcon />
+                </IconButton>
+              </Box>
+              <Typography variant="body1" color="text.secondary" paragraph>
+                {selectedEvent.description}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Date: {selectedEvent.date}
+              </Typography>
             </Box>
-            <Typography variant="body1" color="text.secondary" paragraph>
-              {selectedEvent.description}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Date: {selectedEvent.date}
-            </Typography>
-          </Box>
-        )}
-      </Drawer>
+          )}
+        </Drawer>
 
-      <Snackbar 
-        open={!!error} 
-        autoHideDuration={6000} 
-        onClose={() => setError('')}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-      >
-        <Alert onClose={() => setError('')} severity="warning" sx={{ width: '100%' }}>
-          {error}
-        </Alert>
-      </Snackbar>
+        <Snackbar 
+          open={!!error} 
+          autoHideDuration={6000} 
+          onClose={() => setError('')}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        >
+          <Alert onClose={() => setError('')} severity="warning" sx={{ width: '100%' }}>
+            {error}
+          </Alert>
+        </Snackbar>
+      </Box>
     </Box>
   );
 };

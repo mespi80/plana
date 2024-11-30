@@ -4,7 +4,6 @@ import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import {
   Box,
-  Container,
   Paper,
   TextField,
   Switch,
@@ -59,6 +58,8 @@ export const Settings: React.FC = () => {
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
+    if (!token) return;
+
     try {
       const response = await fetch(API_ENDPOINTS.USER_SETTINGS, {
         method: 'PUT',
@@ -69,76 +70,64 @@ export const Settings: React.FC = () => {
         body: JSON.stringify(form),
       });
 
-      if (response.ok) {
-        const { data } = await response.json();
-        updateUser(data.user);
-        navigate('/map');
-      } else {
-        console.error('Failed to update settings');
+      if (!response.ok) {
+        throw new Error('Failed to update settings');
       }
+
+      const data = await response.json();
+      updateUser(data.data.user);
     } catch (error) {
       console.error('Error updating settings:', error);
     }
   };
 
-  const handleCancel = () => {
-    navigate('/map');
-  };
-
   return (
-    <Container maxWidth="sm">
-      <Box sx={{ mt: 4 }}>
-        <Paper sx={{ p: 4 }}>
-          <Typography variant="h5" gutterBottom>
-            Settings
-          </Typography>
-          <form onSubmit={handleSubmit}>
-            <Stack spacing={3}>
-              <TextField
-                label="First Name"
-                value={form.firstName}
-                onChange={handleChange('firstName')}
-                fullWidth
-              />
-              <TextField
-                label="Last Name"
-                value={form.lastName}
-                onChange={handleChange('lastName')}
-                fullWidth
-              />
-              <Divider />
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={form.darkMode}
-                    onChange={handleChange('darkMode')}
-                    icon={<Brightness4Icon />}
-                    checkedIcon={<Brightness7Icon />}
-                  />
-                }
-                label={`${isDarkMode ? 'Dark' : 'Light'} Mode`}
-              />
-              <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
-                <Button
-                  variant="outlined"
-                  onClick={handleCancel}
-                  sx={{ width: '100px' }}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  variant="contained"
-                  color="primary"
-                  sx={{ width: '100px' }}
-                >
-                  Apply
-                </Button>
-              </Box>
-            </Stack>
-          </form>
-        </Paper>
-      </Box>
-    </Container>
+    <Box sx={{ pb: 7, px: 2, pt: 2 }}>
+      <Typography variant="h5" sx={{ mb: 2 }}>
+        Settings
+      </Typography>
+
+      <Paper sx={{ p: 3, borderRadius: 2 }}>
+        <form onSubmit={handleSubmit}>
+          <Stack spacing={3}>
+            <TextField
+              label="First Name"
+              value={form.firstName}
+              onChange={handleChange('firstName')}
+              fullWidth
+              variant="outlined"
+            />
+            <TextField
+              label="Last Name"
+              value={form.lastName}
+              onChange={handleChange('lastName')}
+              fullWidth
+              variant="outlined"
+            />
+            <Divider />
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={form.darkMode}
+                  onChange={handleChange('darkMode')}
+                  icon={<Brightness4Icon />}
+                  checkedIcon={<Brightness7Icon />}
+                />
+              }
+              label={`${isDarkMode ? 'Dark' : 'Light'} Mode`}
+            />
+            <Button
+              type="submit"
+              variant="contained"
+              color="primary"
+              fullWidth
+              sx={{ mt: 2 }}
+            >
+              Save Changes
+            </Button>
+          </Stack>
+        </form>
+      </Paper>
+    </Box>
   );
 };
