@@ -1,28 +1,32 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Box,
+  Container,
+  Typography,
   Button,
+  TextField,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  TextField,
-  Typography,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
   Paper,
   IconButton,
-  Stack,
-  Grid,
-  FormControl,
-  InputLabel,
   Select,
   MenuItem,
 } from '@mui/material';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { useAuth } from '../../contexts/AuthContext';
 import { API_ENDPOINTS } from '../../config/api';
-import dayjs from 'dayjs';
+import dayjs, { Dayjs } from 'dayjs';
 
 interface Place {
   _id: string;
@@ -39,22 +43,31 @@ interface Event {
   link?: string;
 }
 
-const initialFormState = {
+interface EventFormData {
+  name: string;
+  place: string;
+  date: Dayjs | null;
+  price: number;
+  picture?: string;
+  link?: string;
+}
+
+const initialFormData: EventFormData = {
   name: '',
-  placeId: '',
+  place: '',
   date: dayjs(),
-  price: '',
+  price: 0,
   picture: '',
   link: '',
 };
 
-export const EventsAdmin = () => {
-  const { token } = useAuth();
+const EventsAdmin: React.FC = () => {
   const [events, setEvents] = useState<Event[]>([]);
   const [places, setPlaces] = useState<Place[]>([]);
   const [open, setOpen] = useState(false);
-  const [formData, setFormData] = useState(initialFormState);
+  const [formData, setFormData] = useState<EventFormData>(initialFormData);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const { token } = useAuth();
 
   useEffect(() => {
     fetchEvents();
@@ -91,40 +104,30 @@ export const EventsAdmin = () => {
 
   const handleOpen = (event?: Event) => {
     if (event) {
+      setEditingId(event._id);
       setFormData({
         name: event.name,
-        placeId: event.place._id,
+        place: event.place._id,
         date: dayjs(event.date),
-        price: event.price.toString(),
+        price: event.price,
         picture: event.picture || '',
         link: event.link || '',
       });
-      setEditingId(event._id);
     } else {
-      setFormData(initialFormState);
       setEditingId(null);
+      setFormData(initialFormData);
     }
     setOpen(true);
   };
 
   const handleClose = () => {
     setOpen(false);
-    setFormData(initialFormState);
+    setFormData(initialFormData);
     setEditingId(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    const eventData = {
-      name: formData.name,
-      place: formData.placeId,
-      date: formData.date.toISOString(),
-      price: Number(formData.price),
-      picture: formData.picture,
-      link: formData.link,
-    };
-
     try {
       const url = editingId 
         ? `${API_ENDPOINTS.EVENTS}/${editingId}`
@@ -136,12 +139,16 @@ export const EventsAdmin = () => {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(eventData),
+        body: JSON.stringify({
+          ...formData,
+          date: formData.date?.toISOString(),
+        }),
       });
 
-      if (response.ok) {
-        handleClose();
+      const data = await response.json();
+      if (data.success) {
         fetchEvents();
+        handleClose();
       }
     } catch (error) {
       console.error('Error saving event:', error);
@@ -155,7 +162,6 @@ export const EventsAdmin = () => {
           method: 'DELETE',
           headers: { Authorization: `Bearer ${token}` },
         });
-
         if (response.ok) {
           fetchEvents();
         }
@@ -166,66 +172,72 @@ export const EventsAdmin = () => {
   };
 
   return (
-    <Box sx={{ pb: 7, px: 2, pt: 2 }}>
-      <Typography variant="h5" sx={{ mb: 2 }}>
-        Events Management
-      </Typography>
+    <LocalizationProvider dateAdapter={AdapterDayjs}>
+      <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+        <Typography variant="h4" gutterBottom>
+          Manage Events
+        </Typography>
+        
+        <Button 
+          variant="contained" 
+          color="primary" 
+          onClick={() => handleOpen()}
+          sx={{ mb: 3 }}
+        >
+          Add New Event
+        </Button>
 
-      <Button
-        variant="contained"
-        color="primary"
-        onClick={() => handleOpen()}
-        sx={{ mb: 3 }}
-      >
-        Add New Event
-      </Button>
+        <TableContainer component={Paper}>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>Name</TableCell>
+                <TableCell>Place</TableCell>
+                <TableCell>Date</TableCell>
+                <TableCell>Price</TableCell>
+                <TableCell>Actions</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {events.map((event) => (
+                <TableRow key={event._id}>
+                  <TableCell>{event.name}</TableCell>
+                  <TableCell>{event.place.name}</TableCell>
+                  <TableCell>{dayjs(event.date).format('MMM D, YYYY h:mm A')}</TableCell>
+                  <TableCell>${event.price}</TableCell>
+                  <TableCell>
+                    <IconButton onClick={() => handleOpen(event)}>
+                      <EditIcon />
+                    </IconButton>
+                    <IconButton onClick={() => handleDelete(event._id)}>
+                      <DeleteIcon />
+                    </IconButton>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
 
-      <Grid container spacing={2}>
-        {events.map((event) => (
-          <Grid item xs={12} key={event._id}>
-            <Paper sx={{ p: 2 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <Box>
-                  <Typography variant="h6">{event.name}</Typography>
-                  <Typography color="text.secondary">
-                    {event.place.name} • {dayjs(event.date).format('MMM D, YYYY h:mm A')}
-                  </Typography>
-                  <Typography color="text.secondary">
-                    ${event.price}
-                  </Typography>
-                </Box>
-                <Box>
-                  <IconButton onClick={() => handleOpen(event)}>
-                    <EditIcon />
-                  </IconButton>
-                  <IconButton onClick={() => handleDelete(event._id)}>
-                    <DeleteIcon />
-                  </IconButton>
-                </Box>
-              </Box>
-            </Paper>
-          </Grid>
-        ))}
-      </Grid>
-
-      <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-        <DialogTitle>{editingId ? 'Edit Event' : 'Add New Event'}</DialogTitle>
-        <DialogContent>
-          <Stack spacing={2} sx={{ mt: 1 }}>
-            <TextField
-              label="Name"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              fullWidth
-            />
-            <FormControl fullWidth>
-              <InputLabel>Place</InputLabel>
+        <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
+          <DialogTitle>{editingId ? 'Edit Event' : 'Add New Event'}</DialogTitle>
+          <form onSubmit={handleSubmit}>
+            <DialogContent>
+              <TextField
+                fullWidth
+                label="Name"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                margin="normal"
+                required
+              />
+              
               <Select
-                value={formData.placeId}
-                onChange={(e) => setFormData({ 
-                  ...formData, 
-                  placeId: e.target.value as string 
-                })}
+                fullWidth
+                value={formData.place}
+                onChange={(e) => setFormData({ ...formData, place: e.target.value })}
+                margin="dense"
+                required
               >
                 {places.map((place) => (
                   <MenuItem key={place._id} value={place._id}>
@@ -233,43 +245,54 @@ export const EventsAdmin = () => {
                   </MenuItem>
                 ))}
               </Select>
-            </FormControl>
-            <DateTimePicker
-              label="Date & Time"
-              value={formData.date}
-              onChange={(newValue) => newValue && setFormData({ 
-                ...formData, 
-                date: newValue 
-              })}
-            />
-            <TextField
-              label="Price"
-              value={formData.price}
-              onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-              fullWidth
-              type="number"
-            />
-            <TextField
-              label="Picture URL"
-              value={formData.picture}
-              onChange={(e) => setFormData({ ...formData, picture: e.target.value })}
-              fullWidth
-            />
-            <TextField
-              label="External Link"
-              value={formData.link}
-              onChange={(e) => setFormData({ ...formData, link: e.target.value })}
-              fullWidth
-            />
-          </Stack>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleClose}>Cancel</Button>
-          <Button onClick={handleSubmit} variant="contained">
-            {editingId ? 'Save Changes' : 'Create Event'}
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Box>
+
+              <DateTimePicker
+                label="Date & Time"
+                value={formData.date}
+                onChange={(newValue: Dayjs | null) => newValue && setFormData({ 
+                  ...formData, 
+                  date: newValue 
+                })}
+                sx={{ width: '100%', mt: 2 }}
+              />
+
+              <TextField
+                fullWidth
+                label="Price"
+                type="number"
+                value={formData.price}
+                onChange={(e) => setFormData({ ...formData, price: Number(e.target.value) })}
+                margin="normal"
+                required
+              />
+
+              <TextField
+                fullWidth
+                label="Picture URL"
+                value={formData.picture}
+                onChange={(e) => setFormData({ ...formData, picture: e.target.value })}
+                margin="normal"
+              />
+
+              <TextField
+                fullWidth
+                label="Event Link"
+                value={formData.link}
+                onChange={(e) => setFormData({ ...formData, link: e.target.value })}
+                margin="normal"
+              />
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={handleClose}>Cancel</Button>
+              <Button type="submit" variant="contained" color="primary">
+                {editingId ? 'Update' : 'Create'}
+              </Button>
+            </DialogActions>
+          </form>
+        </Dialog>
+      </Container>
+    </LocalizationProvider>
   );
 };
+
+export default EventsAdmin;

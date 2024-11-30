@@ -1,20 +1,25 @@
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001/api';
+const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
 export const API_ENDPOINTS = {
-  BASE: API_BASE_URL,
+  BASE: BASE_URL,
   // Auth endpoints
-  LOGIN: `${API_BASE_URL}/auth/login`,
-  REGISTER: `${API_BASE_URL}/auth/register`,
-  GOOGLE_AUTH: `${API_BASE_URL}/auth/google`,
-  VALIDATE_TOKEN: `${API_BASE_URL}/auth/validate`,
+  LOGIN: `${BASE_URL}/auth/login`,
+  REGISTER: `${BASE_URL}/auth/register`,
+  GOOGLE_AUTH: `${BASE_URL}/auth/google`,
+  VALIDATE_TOKEN: `${BASE_URL}/auth/validate`,
   
   // Event endpoints
-  EVENTS: `${API_BASE_URL}/events`,
-  EVENT: (id: string) => `${API_BASE_URL}/events/${id}`,
-  NEARBY_EVENTS: `${API_BASE_URL}/events/nearby`,
+  EVENTS: `${BASE_URL}/events`,
+  EVENT: (id: string) => `${BASE_URL}/events/${id}`,
+  NEARBY_EVENTS: `${BASE_URL}/events/nearby`,
+  
+  // Place endpoints
+  PLACES: `${BASE_URL}/places`,
+  PLACE: (id: string) => `${BASE_URL}/places/${id}`,
+  NEARBY_PLACES: `${BASE_URL}/places/nearby`,
   
   // User endpoints
-  USER_SETTINGS: `${API_BASE_URL}/users/settings`,
+  USER_SETTINGS: `${BASE_URL}/users/settings`,
 };
 
 export default API_ENDPOINTS;
